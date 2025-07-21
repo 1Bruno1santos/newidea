@@ -1,5 +1,25 @@
 # DieselBot Dashboard - Project Documentation
 
+## ⚠️ IMPORTANT GUIDELINES FOR DEVELOPMENT
+
+### 🎨 Visual Layout Rules
+- **DO NOT CHANGE** the general visual layout of the website
+- Minor adjustments and improvements are acceptable
+- Maintain the existing dark theme with emerald accents
+- Keep the current design patterns and UI consistency
+
+### 🔓 Development Mode
+- We are in **DEVELOPMENT MODE** - no authentication procedures required
+- Demo credentials (username: "demo", password: "demo") are sufficient
+- No need to implement complex auth systems during development
+
+### 📋 Session Protocol
+- **ALWAYS READ THIS CLAUDE.MD FILE** at the beginning of each new session
+- This ensures consistency and awareness of project guidelines
+- Update this file with any significant changes or new patterns
+
+---
+
 ## Project Overview
 DieselBot Dashboard is a Next.js 15 gaming management application with Telegram bot integration. It provides a web interface for managing game castles, resources, and various game features with multi-language support (PT/EN).
 
