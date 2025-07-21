@@ -1,0 +1,36 @@
+{
+  "clients": [
+    {
+      "id": "demo",
+      "username": "demo",
+      "password": "demo",
+      "nome": "Demo User",
+      "email": "demo@email.com",
+      "ids_igg": ["830555555"]
+    },
+    {
+      "id": "client1",
+      "username": "client1",
+      "password": "client1",
+      "nome": "Cliente 1",
+      "email": "client1@email.com",
+      "ids_igg": ["830123456", "830987654"]
+    },
+    {
+      "id": "client2",
+      "username": "client2",
+      "password": "client2",
+      "nome": "Cliente 2",
+      "email": "client2@email.com",
+      "ids_igg": ["830555555"]
+    },
+    {
+      "id": "bruno",
+      "username": "bruno",
+      "password": "bruno",
+      "nome": "Bruno Santos",
+      "email": "bruno@email.com",
+      "ids_igg": ["830123456", "830987654"]
+    }
+  ]
+}

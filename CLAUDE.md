@@ -13,6 +13,33 @@
 - Demo credentials (username: "demo", password: "demo") are sufficient
 - No need to implement complex auth systems during development
 
+### 🔑 Client Authentication System
+- **Multi-client support** with username/password authentication
+- Client credentials stored in `/data/clients.json`
+- Available clients:
+  - `demo/demo` - Demo user (IGG: 830555555)
+  - `client1/client1` - Cliente 1 (IGGs: 830123456, 830987654)
+  - `client2/client2` - Cliente 2 (IGG: 830555555)
+  - `bruno/bruno` - Bruno Santos (IGGs: 830123456, 830987654)
+- Clients can only access their assigned IGG IDs
+- Client info stored in localStorage after login
+
+### 📂 JSON File Bridge Architecture
+- **Website acts as a bridge** between UI and JSON files
+- **We do NOT create or manage client folders/settings files**
+- Client folders with settings.json are provided externally
+- Our role: Read and write to existing JSON files only
+- Expected structure (managed externally):
+  ```
+  /client-data-path/
+  ├── 830123456/
+  │   └── settings.json
+  ├── 830987654/
+  │   └── settings.json
+  └── 830555555/
+      └── settings.json
+  ```
+
 ### 📋 Session Protocol
 - **ALWAYS READ THIS CLAUDE.MD FILE** at the beginning of each new session
 - This ensures consistency and awareness of project guidelines
@@ -50,9 +77,11 @@ DieselBot Dashboard is a Next.js 15 gaming management application with Telegram 
 newidea/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
+│   │   ├── auth/         # Authentication endpoints
+│   │   │   └── login/    # Client login validation
 │   │   └── telegram-webhook/  # Telegram bot webhook endpoint
 │   ├── dashboard/         # Protected dashboard routes
-│   │   ├── [castle]/     # Dynamic castle pages
+│   │   ├── [castle]/     # Dynamic castle pages (will be [iggId])
 │   │   │   ├── aceleradores/    # Accelerators management
 │   │   │   ├── admin/           # Admin panel
 │   │   │   ├── caca/            # Hunting feature
@@ -82,15 +111,20 @@ newidea/
 │   └── castle-page-navigation.tsx
 ├── hooks/                # Custom React hooks
 ├── lib/                  # Utility functions
-└── utils/                # Helper functions
+│   └── auth.ts          # Authentication utilities
+├── utils/                # Helper functions
+└── data/                 # Data files
+    └── clients.json     # Client credentials and IGG assignments
 ```
 
 ## Key Features
 
 ### Authentication
-- Simple demo authentication (username: "demo", password: "demo")
-- Protected dashboard routes
-- Session management via Next.js routing
+- Multi-client authentication system
+- Credentials validated against `/data/clients.json`
+- Each client has assigned IGG IDs
+- Session stored in localStorage
+- Protected dashboard shows only client's IGG IDs
 
 ### Multi-language Support
 - Portuguese (PT) and English (EN)
@@ -166,8 +200,12 @@ npm run lint
 
 ## API Structure
 - Next.js API routes in `app/api/`
+- Authentication endpoint: `/api/auth/login`
 - Telegram webhook handles bot updates
 - All routes use App Router conventions
+- Planned routes:
+  - `/api/castle/[iggId]` - Read/write settings.json
+  - `/api/client/[clientId]/castles` - Get client's IGG IDs
 
 ## Component Patterns
 - Use "use client" directive for client components
@@ -213,8 +251,23 @@ npm run lint
 - Test both language versions
 
 ## Important Files
-- `app/page.tsx` - Login page and entry point
-- `app/dashboard/[castle]/page.tsx` - Castle dashboard
+- `app/page.tsx` - Login page with client authentication
+- `app/dashboard/[castle]/page.tsx` - Castle dashboard (to be [iggId])
 - `components/ui/` - All UI components
 - `utils/navigation.ts` - Navigation utilities
 - `app/api/telegram-webhook/route.ts` - Bot webhook handler
+- `app/api/auth/login/route.ts` - Client authentication endpoint
+- `lib/auth.ts` - Authentication utilities and session management
+- `data/clients.json` - Client credentials and IGG assignments
+
+## Recent Updates
+- **Client Authentication**: Implemented multi-client login system
+- **JSON Bridge Architecture**: Established pattern for reading/writing external JSON files
+- **Session Management**: Client info stored in localStorage after login
+- **API Routes**: Created authentication endpoint for client validation
+
+## Next Steps
+- Update dashboard to show client-specific IGG IDs
+- Create API routes for reading/writing settings.json files
+- Connect existing castle pages to JSON file data
+- Add client management interface in admin panel

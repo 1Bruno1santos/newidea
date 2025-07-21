@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
+import { setClientInSession } from '@/lib/auth'
 
 const translations = {
   en: {
@@ -33,9 +34,26 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (username === 'demo' && password === 'demo') {
-      router.push('/dashboard')
-    } else {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      
+      if (response.ok) {
+        const client = await response.json()
+        // Store client info in session
+        setClientInSession(client)
+        router.push('/dashboard')
+      } else {
+        toast({
+          variant: "destructive",
+          title: t.error
+        })
+      }
+    } catch (error) {
+      console.error('Login error:', error)
       toast({
         variant: "destructive",
         title: t.error
