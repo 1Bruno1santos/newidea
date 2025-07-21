@@ -3,6 +3,7 @@ import Image from "next/image"
 import { Settings, LogOut, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import AdminLink from "./components/admin-link"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -33,6 +34,7 @@ export default function DashboardLayout({
                   Inicio
                 </Button>
               </Link>
+              <AdminLink />
             </nav>
           </div>
 
@@ -41,7 +43,7 @@ export default function DashboardLayout({
               <Settings className="h-4 w-4 mr-1" />
               Config
             </Button>
-            <Link href="/api/auth/signout">
+            <Link href="/">
               <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-400 hover:bg-red-500/10">
                 <LogOut className="h-4 w-4 mr-1" />
                 Sair

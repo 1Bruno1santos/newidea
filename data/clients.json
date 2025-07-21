@@ -1,12 +1,22 @@
 {
   "clients": [
     {
+      "id": "admin",
+      "username": "admin",
+      "password": "admin",
+      "nome": "Administrador",
+      "email": "admin@dieselbot.com",
+      "ids_igg": [],
+      "role": "admin"
+    },
+    {
       "id": "demo",
       "username": "demo",
       "password": "demo",
       "nome": "Demo User",
       "email": "demo@email.com",
-      "ids_igg": ["830555555"]
+      "ids_igg": ["830555555"],
+      "role": "admin"
     },
     {
       "id": "client1",

@@ -8,6 +8,7 @@ export interface Client {
   nome: string
   email: string
   ids_igg: string[]
+  role?: 'admin' | 'client' // Added role support
 }
 
 export interface ClientsData {
@@ -71,5 +72,13 @@ export function clearClientSession(): void {
 // Check if client has access to IGG ID
 export function clientHasAccess(client: Client | null, iggId: string): boolean {
   if (!client) return false
+  // Admins have access to all castles
+  if (client.role === 'admin') return true
   return client.ids_igg.includes(iggId)
+}
+
+// Check if user is admin
+export function isAdmin(client: Client | null): boolean {
+  if (!client) return false
+  return client.role === 'admin' || client.username === 'admin' || client.username === 'demo'
 }

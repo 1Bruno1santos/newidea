@@ -1,0 +1,39 @@
+{
+  "castles": [
+    {
+      "igg_id": "830123456",
+      "name": "Castelo_Imperial",
+      "level": 35,
+      "power": 1000000,
+      "troops": 50000
+    },
+    {
+      "igg_id": "830987654",
+      "name": "Fortaleza_Negra",
+      "level": 28,
+      "power": 800000,
+      "troops": 40000
+    },
+    {
+      "igg_id": "830555555",
+      "name": "Torre_do_Dragão",
+      "level": 42,
+      "power": 1200000,
+      "troops": 60000
+    },
+    {
+      "igg_id": "830111111",
+      "name": "Cidadela_Real",
+      "level": 31,
+      "power": 900000,
+      "troops": 45000
+    },
+    {
+      "igg_id": "830222222",
+      "name": "Bastião_Sombrio",
+      "level": 25,
+      "power": 700000,
+      "troops": 35000
+    }
+  ]
+}

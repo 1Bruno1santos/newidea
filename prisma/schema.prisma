@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Cliente do sistema
+model Customer {
+  id            Int      @id @default(autoincrement())
+  customer_code String   @unique // Código único do cliente (ex: CLIENTE_001)
+  name          String   // Nome completo
+  email         String?  // Email opcional
+  whatsapp      String?  // WhatsApp opcional
+  address       String?  // Endereço completo
+  role          String   @default("client") // role: admin ou client
+  password      String   // Senha (hash em produção, texto simples em dev)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  deleted_at    DateTime? // Soft delete
+  
+  // Relacionamentos
+  bots          Bot[]
+  notifications Notification[]
+  
+  @@index([customer_code])
+  @@index([email])
+}
+
+// Bot (instância do DieselBot)
+model Bot {
+  id          Int      @id @default(autoincrement())
+  customer_id Int
+  castle_id   String   // ID do castelo (ex: 830123456)
+  igg_id      String   // ID do jogador IGG
+  plan_type   String   // mensal, trimestral, semestral, anual
+  price       Float    // Preço do plano
+  currency    String   @default("BRL") // Moeda
+  status      String   @default("active") // active, expired, paused, cancelled
+  start_date  DateTime @default(now())
+  end_date    DateTime // Data de expiração
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  deleted_at  DateTime? // Soft delete
+  
+  // Relacionamentos
+  customer    Customer @relation(fields: [customer_id], references: [id])
+  renewals    BotRenewal[]
+  
+  @@index([customer_id])
+  @@index([castle_id])
+  @@index([status])
+  @@index([end_date])
+}
+
+// Histórico de renovações
+model BotRenewal {
+  id              Int      @id @default(autoincrement())
+  bot_id          Int
+  action          String   // renewed, paused, cancelled, reactivated
+  old_end_date    DateTime // Data de expiração anterior
+  new_end_date    DateTime // Nova data de expiração
+  old_plan_type   String   // Plano anterior
+  new_plan_type   String   // Novo plano
+  price           Float    // Preço da renovação
+  currency        String   @default("BRL")
+  notes           String?  // Observações opcionais
+  created_at      DateTime @default(now())
+  created_by      String?  // ID do admin que fez a ação
+  
+  // Relacionamentos
+  bot Bot @relation(fields: [bot_id], references: [id])
+  
+  @@index([bot_id])
+  @@index([created_at])
+}
+
+// Notificações
+model Notification {
+  id           Int      @id @default(autoincrement())
+  customer_id  Int
+  type         String   // renewal_reminder, expiration_warning, payment_pending, general
+  title        String   // Título da notificação
+  message      String   // Mensagem completa
+  channel      String   @default("whatsapp") // whatsapp, email, sms
+  status       String   @default("pending") // pending, sent, failed
+  scheduled_at DateTime? // Quando deve ser enviada
+  sent_at      DateTime? // Quando foi enviada
+  error        String?   // Erro se falhou
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  
+  // Relacionamentos
+  customer Customer @relation(fields: [customer_id], references: [id])
+  
+  @@index([customer_id])
+  @@index([status])
+  @@index([scheduled_at])
+}
+
+// Configurações do sistema
+model SystemSettings {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique // Chave da configuração
+  value      String   // Valor da configuração
+  description String? // Descrição da configuração
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  @@index([key])
+}
+
+// Logs de atividade (para auditoria)
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  user_id     Int?     // ID do usuário que fez a ação
+  user_name   String?  // Nome do usuário
+  action      String   // Ação realizada
+  entity_type String   // Tipo de entidade (customer, bot, etc)
+  entity_id   Int?     // ID da entidade
+  old_data    Json?    // Dados anteriores
+  new_data    Json?    // Novos dados
+  ip_address  String?  // IP de origem
+  user_agent  String?  // User agent
+  created_at  DateTime @default(now())
+  
+  @@index([user_id])
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+}
