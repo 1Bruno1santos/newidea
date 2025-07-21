@@ -24,6 +24,12 @@
 - **Note**: Database integration will be implemented when needed
 - Currently using hardcoded data for development
 
+### 🚀 Deployment Information
+- **Platform**: Vercel
+- **Auto-deploy URL**: https://api.vercel.com/v1/integrations/deploy/prj_GXpX1jfuDxcYbmScAYk65NgUCYiA/WxvsAFQHTQ
+- **GitHub Repository**: https://github.com/1Bruno1santos/newidea
+- Auto-deploys on push to main branch
+
 ---
 
 ## Project Overview
