@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Pause,
   X,
+  Trash2,
   MoreHorizontal
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -326,6 +327,20 @@ export default function CustomerDetailsPage() {
     }
   }
 
+  const handleDeleteBot = async (botId: number) => {
+    if (window.confirm("ATENÇÃO: Esta ação é irreversível!\n\nTem certeza que deseja REMOVER COMPLETAMENTE este bot?\n\nTodo o histórico será perdido.")) {
+      const updatedBots = customer.bots.filter(bot => bot.id !== botId)
+
+      setCustomer({ ...customer, bots: updatedBots })
+      
+      toast({
+        title: "Bot removido",
+        description: "O bot foi removido completamente da ficha do cliente.",
+        variant: "destructive"
+      })
+    }
+  }
+
   const activeBots = customer.bots.filter(bot => bot.status === 'active').length
   const expiredBots = customer.bots.filter(bot => bot.status === 'expired').length
   const monthlyValue = customer.bots
@@ -548,11 +563,19 @@ export default function CustomerDetailsPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            className="text-red-500"
+                            className="text-orange-500"
                             onClick={() => handleCancelBot(bot.id)}
                           >
                             <X className="mr-2 h-4 w-4" />
                             Cancelar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-zinc-800" />
+                          <DropdownMenuItem 
+                            className="text-red-600 hover:text-red-500"
+                            onClick={() => handleDeleteBot(bot.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remover Completamente
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
