@@ -1,54 +1,86 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 
-const castles = [
-  {
-    name: 'Castelo_Imperial',
-    level: 35,
-    power: 1000000,
-    troops: 50000
-  },
-  {
-    name: 'Fortaleza_Negra',
-    level: 28,
-    power: 800000,
-    troops: 40000
-  },
-  {
-    name: 'Torre_do_Dragão',
-    level: 42,
-    power: 1200000,
-    troops: 60000
-  },
-  {
-    name: 'Cidadela_Real',
-    level: 31,
-    power: 900000,
-    troops: 45000
-  },
-  {
-    name: 'Bastião_Sombrio',
-    level: 25,
-    power: 700000,
-    troops: 35000
-  },
-  {
-    name: 'bola1',
-    level: 30,
-    power: 850000,
-    troops: 42500
-  },
-  {
-    name: 'xsultal',
-    level: 33,
-    power: 950000,
-    troops: 47500
-  }
-]
+interface Castle {
+  igg_id: string
+  name: string
+  level: number
+  power: number
+  troops: number
+}
 
 export function CastleList() {
   const router = useRouter()
+  const [castles, setCastles] = useState<Castle[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchCastles = async () => {
+      try {
+        // Get client data from localStorage
+        const clientStr = localStorage.getItem('client')
+        if (!clientStr) {
+          router.push('/')
+          return
+        }
+
+        const client = JSON.parse(clientStr)
+
+        const response = await fetch('/api/castles/list', {
+          headers: {
+            'x-client-data': JSON.stringify(client)
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch castles')
+        }
+
+        const data = await response.json()
+        setCastles(data.castles || [])
+      } catch (err) {
+        console.error('Error fetching castles:', err)
+        setError('Erro ao carregar castelos')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCastles()
+  }, [router])
+
+  if (loading) {
+    return (
+      <aside className="w-80 flex-shrink-0">
+        <h2 className="text-white mb-4">Os meus castelos:</h2>
+        <div className="flex items-center justify-center h-32">
+          <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+        </div>
+      </aside>
+    )
+  }
+
+  if (error) {
+    return (
+      <aside className="w-80 flex-shrink-0">
+        <h2 className="text-white mb-4">Os meus castelos:</h2>
+        <div className="text-red-500 text-sm">{error}</div>
+      </aside>
+    )
+  }
+
+  if (castles.length === 0) {
+    return (
+      <aside className="w-80 flex-shrink-0">
+        <h2 className="text-white mb-4">Os meus castelos:</h2>
+        <div className="text-zinc-400 text-sm">Nenhum castelo encontrado</div>
+      </aside>
+    )
+  }
 
   return (
     <aside className="w-80 flex-shrink-0">
@@ -56,8 +88,8 @@ export function CastleList() {
       <div className="space-y-2">
         {castles.map((castle) => (
           <button
-            key={castle.name}
-            onClick={() => router.push(`/dashboard/${encodeURIComponent(castle.name)}`)}
+            key={castle.igg_id}
+            onClick={() => router.push(`/dashboard/${castle.igg_id}`)}
             className="w-full p-4 bg-zinc-900/50 rounded-lg hover:bg-zinc-800/50 transition-colors text-left"
           >
             <div className="flex justify-between items-start mb-2">
@@ -65,6 +97,7 @@ export function CastleList() {
               <span className="text-zinc-500">Lvl {castle.level}</span>
             </div>
             <div className="text-sm text-zinc-400">
+              <div>IGG: {castle.igg_id}</div>
               <div>Power: {castle.power.toLocaleString()} | Troops: {castle.troops.toLocaleString()}</div>
             </div>
           </button>

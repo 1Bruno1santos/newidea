@@ -31,27 +31,38 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-// Mock data for development
-const mockSettings = {
-  config_path: "C:\\Users\\bruno\\Desktop\\lordsbot_dev\\config",
-  bot_token: "••••••••••••••••••••••••••••••••",
-  whatsapp_api_key: "",
-  notification_email: "admin@dieselbot.com",
-  renewal_reminder_days: "30,15,7,1",
-  auto_notifications: true,
-  backup_enabled: true,
-  backup_retention_days: 30,
-  maintenance_mode: false,
-  system_language: "pt-BR"
-}
-
 export default function SettingsPage() {
   const { toast } = useToast()
-  const [settings, setSettings] = useState(mockSettings)
+  const [settings, setSettings] = useState({
+    config_path: "",
+    bot_token: "••••••••••••••••••••••••••••••••",
+    whatsapp_api_key: "",
+    notification_email: "admin@dieselbot.com",
+    renewal_reminder_days: "30,15,7,1",
+    auto_notifications: true,
+    backup_enabled: true,
+    backup_retention_days: 30,
+    maintenance_mode: false,
+    system_language: "pt-BR"
+  })
   const [loading, setLoading] = useState(false)
   const [pathValid, setPathValid] = useState(true)
   const [testingPath, setTestingPath] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+
+  useEffect(() => {
+    // Load settings from API
+    const loadSettings = async () => {
+      try {
+        const response = await fetch('/api/settings')
+        const data = await response.json()
+        setSettings(prev => ({ ...prev, config_path: data.config_path || "" }))
+      } catch (error) {
+        console.error('Error loading settings:', error)
+      }
+    }
+    loadSettings()
+  }, [])
 
   const convertPathToWSL = (windowsPath: string) => {
     // Convert Windows path to WSL path
@@ -91,16 +102,35 @@ export default function SettingsPage() {
   const handleSaveSettings = async () => {
     setLoading(true)
     
-    // In production, this would save to database
-    setTimeout(() => {
-      setLoading(false)
-      setHasChanges(false)
-      
-      toast({
-        title: "Configurações salvas",
-        description: "As configurações foram atualizadas com sucesso!"
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          config_path: settings.config_path
+        })
       })
-    }, 1000)
+
+      if (response.ok) {
+        setHasChanges(false)
+        toast({
+          title: "Configurações salvas",
+          description: "As configurações foram atualizadas com sucesso!"
+        })
+      } else {
+        throw new Error('Failed to save settings')
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as configurações.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleResetSettings = () => {

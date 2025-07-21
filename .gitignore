@@ -39,3 +39,6 @@ next-env.d.ts
 # pnpm
 pnpm-lock.yaml
 /lib/generated/prisma
+
+# system settings
+data/system-settings.json
