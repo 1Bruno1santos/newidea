@@ -53,7 +53,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     // Check if user is logged in and is admin
-    const userStr = localStorage.getItem("clientInfo")
+    const userStr = localStorage.getItem("client")
     if (!userStr) {
       router.push("/")
       return
@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem("clientInfo")
+    localStorage.removeItem("client")
     router.push("/")
   }
 

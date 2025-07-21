@@ -10,7 +10,7 @@ export default function AdminLink() {
 
   useEffect(() => {
     // Check if user is admin from localStorage
-    const clientStr = localStorage.getItem("clientInfo")
+    const clientStr = localStorage.getItem("client")
     if (clientStr) {
       const client = JSON.parse(clientStr)
       // Check if user is admin by username or role
