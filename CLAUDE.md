@@ -32,21 +32,28 @@
 - Click the Admin button to access the administrative panel at `/admin`
 - Regular clients don't see the Admin button
 
-### 📂 JSON File Bridge Architecture
-- **Website acts as a bridge** between UI and JSON files
-- **We do NOT create or manage client folders/settings files**
-- Client folders with settings.json are provided externally
-- Our role: Read and write to existing JSON files only
-- Expected structure (managed externally):
+### 🏰 Castle System Architecture (UPDATED!)
+- **Dynamic Castle Loading**: Castles are loaded from the configured directory path
+- **Config Path Setting**: Set via Admin → Settings → Config Path
+- **IGG IDs as URLs**: Routes now use IGG IDs instead of castle names (`/dashboard/830123456`)
+- **Automatic Filtering**: Clients only see castles matching their assigned IGG IDs
+- **Path Conversion**: Windows paths automatically converted to WSL format when needed
+- **Expected Structure**:
   ```
-  /client-data-path/
-  ├── 830123456/
-  │   └── settings.json
+  /config-path/
+  ├── 830123456/         # IGG ID as folder name
+  │   └── settings.json  # Castle configuration
   ├── 830987654/
   │   └── settings.json
   └── 830555555/
       └── settings.json
   ```
+
+### 📂 System Settings Storage
+- **Config Path**: Stored in `/data/system-settings.json`
+- **Persistence**: Settings survive server restarts
+- **API Access**: GET/POST `/api/settings` for config management
+- **Git Ignored**: system-settings.json is not committed
 
 ### 📋 Session Protocol
 - **ALWAYS READ THIS CLAUDE.MD FILE** at the beginning of each new session
@@ -73,7 +80,7 @@
 
 ---
 
-## 🆕 ADMIN PANEL IMPLEMENTATION (NEW!)
+## 🆕 ADMIN PANEL IMPLEMENTATION
 
 ### Overview
 Complete administrative panel implemented at `/admin` with full CRM functionality for managing customers and bot subscriptions.
@@ -95,12 +102,18 @@ Complete administrative panel implemented at `/admin` with full CRM functionalit
   - Statistics (active/expired bots, monthly value)
   - Complete CRUD operations
 
-#### 3. Bot Management
+#### 3. Bot Management (UPDATED!)
 - **Add Bot**: Castle ID, IGG ID, plan selection
 - **Plan Types**: Monthly (R$150), Quarterly (R$400), Semi-annual (R$750), Annual (R$1400)
-- **Bot Actions**: Renew, Pause, Cancel, Edit
+- **Bot Actions**: 
+  - **Renew/Reactivate**: Extend subscription period
+  - **Pause**: Temporarily suspend bot
+  - **Edit**: Modify bot details
+  - **Cancel**: Mark as cancelled (keeps in records)
+  - **Remove Completely** (NEW!): Permanently delete from customer record
 - **Renewal History**: Track all renewals with dates and prices
 - **Status Tracking**: Active, Expired, Paused, Cancelled
+- **Visual Indicators**: Color-coded actions (orange for cancel, red for delete)
 
 #### 4. Notifications (`/admin/notifications`)
 - **Send Notifications**: Manual messages to customers
@@ -110,7 +123,11 @@ Complete administrative panel implemented at `/admin` with full CRM functionalit
 - **Automatic Reminders**: Configured for 30, 15, 7, 1 days before expiration
 
 #### 5. System Settings (`/admin/settings`)
-- **Config Path**: Dynamic configuration path for castle settings files
+- **Config Path** (FUNCTIONAL!): 
+  - Set the directory where castle folders are located
+  - Path is saved in `/data/system-settings.json`
+  - Validates and tests path before saving
+  - Automatic Windows → WSL path conversion
 - **General Settings**: System language, maintenance mode, backup settings
 - **Integrations**: Telegram bot token, WhatsApp API configuration
 - **Notification Settings**: Auto-reminder days, notification preferences
@@ -123,18 +140,18 @@ Complete administrative panel implemented at `/admin` with full CRM functionalit
 - `lib/auth-types.ts` - Shared TypeScript interfaces
 - `lib/auth.ts` - Re-exports for backward compatibility
 
-#### Mock Data Structure
-All admin features use mock data in development mode:
-- Customer data with bot subscriptions
-- Revenue statistics and charts
-- Notification queue simulation
-- System settings persistence
+#### API Routes Structure
+- `/api/auth/login` - User authentication
+- `/api/settings` - GET/POST config path management
+- `/api/castles/list` - Dynamic castle listing from config directory
+- `/api/admin/*` - Admin-specific endpoints (future)
 
-#### UI Components
-- All built with shadcn/ui components
-- Consistent dark theme with emerald accents
-- Responsive design for mobile/desktop
-- Toast notifications for user feedback
+#### Dynamic Castle Loading System
+- Reads castle directories from configured path
+- Filters by numeric folder names (IGG IDs)
+- Attempts to read settings.json for castle details
+- Falls back to defaults if settings.json missing
+- Multi-tenant filtering based on client's IGG IDs
 
 ---
 
@@ -155,9 +172,11 @@ newidea/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   │   ├── auth/         # Authentication endpoints
-│   │   │   └── login/    # Client login validation
-│   │   └── telegram-webhook/  # Telegram bot webhook endpoint
-│   ├── admin/            # ADMIN PANEL (NEW!)
+│   │   ├── castles/      # Castle management
+│   │   │   └── list/     # Dynamic castle listing
+│   │   ├── settings/     # System settings API
+│   │   └── telegram-webhook/  # Telegram bot webhook
+│   ├── admin/            # Admin panel
 │   │   ├── layout.tsx    # Admin layout with sidebar
 │   │   ├── page.tsx      # Dashboard with statistics
 │   │   ├── users/        # Customer management
@@ -165,14 +184,13 @@ newidea/
 │   │   │   └── [id]/     # Customer details
 │   │   │       └── page.tsx
 │   │   ├── notifications/ # Notification center
-│   │   │   └── page.tsx
 │   │   └── settings/     # System settings
-│   │       └── page.tsx
 │   ├── dashboard/         # Protected dashboard routes
-│   │   ├── [castle]/     # Dynamic castle pages
+│   │   ├── [castle]/     # Dynamic castle pages (NOW USES IGG IDs!)
 │   │   │   ├── (20+ feature pages...)
 │   │   └── components/    # Dashboard components
-│   │       └── admin-link.tsx # Admin button (NEW!)
+│   │       ├── castle-list.tsx # Dynamic castle loader
+│   │       └── admin-link.tsx # Admin button
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
 │   └── page.tsx          # Login page
@@ -191,7 +209,8 @@ newidea/
 ├── utils/                # Helper functions
 └── data/                 # Data files
     ├── clients.json     # Client credentials
-    └── castles.json     # Castle information
+    ├── castles.json     # Castle information (mock)
+    └── system-settings.json # Config path storage (git ignored)
 ```
 
 ## Current Project Status
@@ -202,65 +221,87 @@ newidea/
 3. **Admin Panel** - Complete CRM system for customer/bot management
 4. **Role-based Access** - Admin users get extra features
 5. **Database Schema** - Prisma configured and ready
-6. **Mock Data System** - Development mode with JSON files
-7. **UI/UX Polish** - Consistent dark theme throughout
+6. **Dynamic Castle Loading** - Reads from configured directory
+7. **Config Path Management** - Settable via admin panel
+8. **Bot Removal Feature** - Complete deletion from customer records
+9. **Build Optimizations** - All deployment issues resolved
 
 ### 🚧 In Progress
 1. **Castle Feature Pages** - Structure exists, need implementation
-2. **Settings.json Integration** - API routes for reading/writing castle configs
+2. **Settings.json Read/Write** - API routes for castle configuration
 
 ### 📋 Next Steps
-1. **Connect to Real Database** - Run migrations when ready for production
-2. **Implement Castle Features** - Make each castle management page functional
-3. **Real WhatsApp Integration** - Replace wa.me links with API
-4. **Automated Tasks** - Cron jobs for renewal reminders
+1. **Implement Castle Features** - Make each page functional
+2. **Connect to Real Database** - Run migrations for production
+3. **Real WhatsApp Integration** - Replace wa.me links
+4. **Automated Tasks** - Cron jobs for reminders
 5. **Payment Gateway** - Integrate payment processing
 
 ## Important Files
-- `app/page.tsx` - Login page with client authentication
-- `app/admin/*` - Complete admin panel implementation
-- `app/dashboard/[castle]/page.tsx` - Castle dashboard
-- `lib/auth-*.ts` - Authentication module (separated for build optimization)
-- `prisma/schema.prisma` - Complete database schema
-- `data/clients.json` - Client credentials with admin roles
-- `data/castles.json` - Castle information
+- `app/page.tsx` - Login page
+- `app/admin/*` - Admin panel pages
+- `app/dashboard/components/castle-list.tsx` - Dynamic castle loader
+- `app/api/settings/route.ts` - Config path API
+- `app/api/castles/list/route.ts` - Castle listing API
+- `lib/auth-*.ts` - Authentication modules
+- `prisma/schema.prisma` - Database schema
+- `data/clients.json` - User credentials
+- `data/system-settings.json` - Config storage
 
-## Recent Updates (2024-01-21)
-- **Admin Panel Created**: Full CRM system at `/admin`
-- **Customer Management**: CRUD operations with bot subscriptions
-- **Notification System**: Customer communication center
-- **System Settings**: Dynamic config path management
-- **Auth Module Split**: Fixed build errors by separating server/client code
-- **Role-based Access**: Admin button appears for admin/demo users
-- **Prisma Integration**: Database schema ready for production
-- **Build Fixes**: Resolved all Vercel deployment issues
+## Recent Updates (2025-01-21)
+- **Dynamic Castle System**: Replaced hardcoded castles with directory-based loading
+- **Config Path API**: Functional settings management
+- **URL Structure Change**: Now uses IGG IDs instead of castle names
+- **Bot Removal Feature**: Added "Remove Completely" action
+- **Path Conversion**: Automatic Windows → WSL conversion
+- **Build Fixes**: Resolved all deployment issues
+- **localStorage Fix**: Corrected key from 'clientInfo' to 'client'
 
 ## Development Commands
 ```bash
 # Install dependencies
 npm install
 
-# Run development server
+# Run development server (default port 3000)
 npm run dev
+
+# Run on custom port (Windows)
+set PORT=4002 && npm run dev
+
+# Run on custom port (Mac/Linux)
+PORT=4002 npm run dev
 
 # Build for production
 npm run build
 
-# Run database migrations (when ready)
-npx prisma migrate dev
+# Git operations
+git pull                    # Get latest changes
+git add .                   # Stage all changes
+git commit -m "message"     # Commit changes
+git push origin main        # Push to GitHub
 
-# Generate Prisma client
-npx prisma generate
+# Database (when ready)
+npx prisma migrate dev      # Run migrations
+npx prisma generate         # Generate client
 ```
 
+## How to Test Locally
+1. Clone: `git clone https://github.com/1Bruno1santos/newidea.git`
+2. Install: `cd newidea && npm install`
+3. Run: `npm run dev` or `set PORT=4002 && npm run dev`
+4. Access: `http://localhost:3000` or `http://localhost:4002`
+5. Login: Use admin/admin or demo/demo
+6. Configure: Go to Admin → Settings → Set config path
+7. Test: Castles will load from your configured directory
+
 ## How to Access Admin Panel
-1. Go to https://newidea-orpin.vercel.app
+1. Go to https://newidea-orpin.vercel.app or localhost
 2. Login with **admin/admin** or **demo/demo**
 3. Click the **"Admin"** button in the dashboard header
 4. Access full admin features at `/admin`
 
 ---
 
-**Last Updated**: 2024-01-21
+**Last Updated**: 2025-01-21 (Session 2)
 **Updated By**: Claude with Bruno
-**Status**: Development Mode - Admin Panel Fully Implemented
+**Status**: Development Mode - Dynamic Castle System Implemented
