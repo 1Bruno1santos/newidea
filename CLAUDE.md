@@ -18,6 +18,12 @@
 - This ensures consistency and awareness of project guidelines
 - Update this file with any significant changes or new patterns
 
+### 🗄️ Database Configuration (For Future Use)
+- **Database**: PostgreSQL (Supabase)
+- **Connection String**: `DATABASE_URL="postgresql://postgres:Bz916444389@db.ynerykeqaycpcgssrqrg.supabase.co:5432/postgres"`
+- **Note**: Database integration will be implemented when needed
+- Currently using hardcoded data for development
+
 ---
 
 ## Project Overview
