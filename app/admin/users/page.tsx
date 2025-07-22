@@ -47,53 +47,24 @@ import {
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
-// Mock data for development
-const mockCustomers = [
-  {
-    id: 1,
-    customer_code: "CLIENTE_001",
-    name: "João Silva",
-    email: "joao.silva@email.com",
-    whatsapp: "11999887766",
-    address: "Rua das Flores, 123 - São Paulo, SP",
-    totalBots: 3,
-    activeBots: 2,
-    expiredBots: 1,
-    monthlyValue: 450.00,
-    created_at: new Date('2024-01-15').toISOString()
-  },
-  {
-    id: 2,
-    customer_code: "CLIENTE_002",
-    name: "Maria Santos",
-    email: "maria.santos@email.com",
-    whatsapp: "21998765432",
-    address: "Av. Principal, 456 - Rio de Janeiro, RJ",
-    totalBots: 5,
-    activeBots: 5,
-    expiredBots: 0,
-    monthlyValue: 750.00,
-    created_at: new Date('2024-02-20').toISOString()
-  },
-  {
-    id: 3,
-    customer_code: "CLIENTE_003",
-    name: "Pedro Costa",
-    email: "pedro.costa@email.com",
-    whatsapp: "31987654321",
-    address: "Rua do Comércio, 789 - Belo Horizonte, MG",
-    totalBots: 2,
-    activeBots: 1,
-    expiredBots: 1,
-    monthlyValue: 300.00,
-    created_at: new Date('2024-03-10').toISOString()
-  }
-]
+interface Customer {
+  id: number
+  customer_code: string
+  name: string
+  email: string | null
+  whatsapp: string | null
+  address: string | null
+  totalBots: number
+  activeBots: number
+  expiredBots: number
+  monthlyValue: number
+  created_at: string
+}
 
 export default function CustomersPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [customers, setCustomers] = useState(mockCustomers)
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false)
@@ -105,10 +76,30 @@ export default function CustomersPage() {
     password: ""
   })
 
+  // Fetch customers from API
+  useEffect(() => {
+    fetchCustomers()
+  }, [])
+
+  const fetchCustomers = async () => {
+    try {
+      const response = await fetch('/api/customers')
+      const data = await response.json()
+      setCustomers(data)
+    } catch (error) {
+      console.error('Error fetching customers:', error)
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar clientes",
+        variant: "destructive"
+      })
+    }
+  }
+
   const filteredCustomers = customers.filter(customer => 
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.customer_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const formatCurrency = (value: number) => {
@@ -120,12 +111,6 @@ export default function CustomersPage() {
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('pt-BR')
-  }
-
-  const generateCustomerCode = () => {
-    const lastCustomer = customers.sort((a, b) => b.id - a.id)[0]
-    const nextNumber = lastCustomer ? lastCustomer.id + 1 : 1
-    return `CLIENTE_${nextNumber.toString().padStart(3, '0')}`
   }
 
   const handleCreateCustomer = async () => {
@@ -140,44 +125,71 @@ export default function CustomersPage() {
 
     setLoading(true)
     
-    // In production, this would be an API call
-    const customerCode = generateCustomerCode()
-    const newCustomerData = {
-      id: customers.length + 1,
-      customer_code: customerCode,
-      ...newCustomer,
-      totalBots: 0,
-      activeBots: 0,
-      expiredBots: 0,
-      monthlyValue: 0,
-      created_at: new Date().toISOString()
-    }
+    try {
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCustomer)
+      })
 
-    setCustomers([...customers, newCustomerData])
-    setShowNewCustomerDialog(false)
-    setNewCustomer({
-      name: "",
-      email: "",
-      whatsapp: "",
-      address: "",
-      password: ""
-    })
-    
-    toast({
-      title: "Cliente criado",
-      description: `${newCustomerData.name} foi adicionado com sucesso!`
-    })
-    
-    setLoading(false)
+      if (response.ok) {
+        const createdCustomer = await response.json()
+        setCustomers([...customers, createdCustomer])
+        setShowNewCustomerDialog(false)
+        setNewCustomer({
+          name: "",
+          email: "",
+          whatsapp: "",
+          address: "",
+          password: ""
+        })
+        
+        toast({
+          title: "Cliente criado",
+          description: `${createdCustomer.name} foi adicionado com sucesso!`
+        })
+      } else {
+        throw new Error('Failed to create customer')
+      }
+    } catch (error) {
+      console.error('Error creating customer:', error)
+      toast({
+        title: "Erro",
+        description: "Falha ao criar cliente",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleDeleteCustomer = async (customerId: number) => {
     if (window.confirm("Tem certeza que deseja excluir este cliente?")) {
-      setCustomers(customers.filter(c => c.id !== customerId))
-      toast({
-        title: "Cliente excluído",
-        description: "O cliente foi removido com sucesso."
-      })
+      try {
+        const response = await fetch(`/api/customers/${customerId}`, {
+          method: 'DELETE'
+        })
+
+        if (response.ok) {
+          // Refresh the customer list after deletion
+          await fetchCustomers()
+          toast({
+            title: "Cliente excluído",
+            description: "O cliente foi removido com sucesso."
+          })
+        } else {
+          throw new Error('Failed to delete customer')
+        }
+      } catch (error) {
+        console.error('Error deleting customer:', error)
+        toast({
+          title: "Erro",
+          description: "Falha ao excluir cliente",
+          variant: "destructive"
+        })
+      }
     }
   }
 
