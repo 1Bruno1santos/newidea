@@ -6,11 +6,17 @@ const prisma = new PrismaClient()
 // DELETE /api/customers/:id
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
     
+    // First delete related bots, then delete customer
+    await prisma.bot.deleteMany({
+      where: { customer_id: id }
+    })
+
     await prisma.customer.delete({
       where: { id }
     })
@@ -25,10 +31,11 @@ export async function DELETE(
 // GET /api/customers/:id
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idStr } = await params
+    const id = parseInt(idStr)
     
     const customer = await prisma.customer.findUnique({
       where: { id },
